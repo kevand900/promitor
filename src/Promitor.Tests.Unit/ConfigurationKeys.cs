@@ -19,7 +19,6 @@
             public const string ManagementEndpoint = "azureCustomCloud:managementEndpoint";
             public const string StorageEndpointSuffix = "azureCustomCloud:storageEndpointSuffix";
             public const string KeyVaultSuffix = "azureCustomCloud:keyVaultSuffix";
-
         }
     }
 }

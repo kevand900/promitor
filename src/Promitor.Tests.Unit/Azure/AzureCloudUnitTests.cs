@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Azure.Identity;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Extensions.Configuration;
 using Promitor.Core.Extensions;
 using Promitor.Core.Serialization.Enum;
 using Xunit;
@@ -17,9 +19,10 @@ namespace Promitor.Tests.Unit.Azure
             // Arrange
             var azureCloud = AzureCloud.Global;
             var expectedEnvironment = AzureEnvironment.AzureGlobalCloud;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act
-            var azureEnvironment = azureCloud.GetAzureEnvironment();
+            var azureEnvironment = azureCloud.GetAzureEnvironment(config);
 
             // Assert
             PromitorAssert.ContainsSameAzureEnvironmentInfo(expectedEnvironment, azureEnvironment);
@@ -31,9 +34,10 @@ namespace Promitor.Tests.Unit.Azure
             // Arrange
             var azureCloud = AzureCloud.China;
             var expectedEnvironment = AzureEnvironment.AzureChinaCloud;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act
-            var azureEnvironment = azureCloud.GetAzureEnvironment();
+            var azureEnvironment = azureCloud.GetAzureEnvironment(config);
 
             // Assert
             PromitorAssert.ContainsSameAzureEnvironmentInfo(expectedEnvironment, azureEnvironment);
@@ -45,9 +49,10 @@ namespace Promitor.Tests.Unit.Azure
             // Arrange
             var azureCloud = AzureCloud.Germany;
             var expectedEnvironment = AzureEnvironment.AzureGermanCloud;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act
-            var azureEnvironment = azureCloud.GetAzureEnvironment();
+            var azureEnvironment = azureCloud.GetAzureEnvironment(config);
 
             // Assert
             PromitorAssert.ContainsSameAzureEnvironmentInfo(expectedEnvironment, azureEnvironment);
@@ -59,9 +64,44 @@ namespace Promitor.Tests.Unit.Azure
             // Arrange
             var azureCloud = AzureCloud.UsGov;
             var expectedEnvironment = AzureEnvironment.AzureUSGovernment;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act
-            var azureEnvironment = azureCloud.GetAzureEnvironment();
+            var azureEnvironment = azureCloud.GetAzureEnvironment(config);
+
+            // Assert
+            PromitorAssert.ContainsSameAzureEnvironmentInfo(expectedEnvironment, azureEnvironment);
+        }
+
+        [Fact]
+        public void GetAzureEnvironment_ForAzureCustomCloud_ProvidesCorrectEnvironmentInfo()
+        {
+            // Arrange
+            var azureCloud = AzureCloud.Custom;
+            AzureEnvironment expectedEnvironment = new AzureEnvironment
+            {
+                Name = "AzureCustomCloud",
+                AuthenticationEndpoint = "https://login.microsoftonline.com/custom",
+                ResourceManagerEndpoint = "https://management.azure.com/custom",
+                ManagementEndpoint = "https://management.core.windows.net/custom",
+                GraphEndpoint = "https://graph.windows.net/custom",
+                StorageEndpointSuffix = "core.windowscustom.net",
+                KeyVaultSuffix = "vault.azurecustom.net"
+            };
+
+            var config = CreateConfiguration(new Dictionary<string, string> {
+                { ConfigurationKeys.AzureCustomCloud.Name, expectedEnvironment.Name },
+                { ConfigurationKeys.AzureCustomCloud.AuthenticationEndpoint, expectedEnvironment.AuthenticationEndpoint },
+                {ConfigurationKeys.AzureCustomCloud.ResourceManagerEndpoint, expectedEnvironment.ResourceManagerEndpoint },
+                {ConfigurationKeys.AzureCustomCloud.ManagementEndpoint, expectedEnvironment.ManagementEndpoint },
+                { ConfigurationKeys.AzureCustomCloud.GraphEndpoint , expectedEnvironment.GraphEndpoint },
+                {ConfigurationKeys.AzureCustomCloud.StorageEndpointSuffix, expectedEnvironment.StorageEndpointSuffix },
+                {ConfigurationKeys.AzureCustomCloud.KeyVaultSuffix, expectedEnvironment.KeyVaultSuffix },
+            });
+
+
+            // Act
+            var azureEnvironment = azureCloud.GetAzureEnvironment(config);
 
             // Assert
             PromitorAssert.ContainsSameAzureEnvironmentInfo(expectedEnvironment, azureEnvironment);
@@ -72,10 +112,12 @@ namespace Promitor.Tests.Unit.Azure
         {
             // Arrange
             var azureCloud = AzureCloud.Unspecified;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act & Assert
-            Assert.Throws<ArgumentOutOfRangeException>(()=> azureCloud.GetAzureEnvironment());
+            Assert.Throws<ArgumentOutOfRangeException>(()=> azureCloud.GetAzureEnvironment(config));
         }
+
 
         [Fact]
         public void GetAzureAuthorityHost_ForAzureGlobalCloud_ProvidesCorrectAuthorityHost()
@@ -83,9 +125,10 @@ namespace Promitor.Tests.Unit.Azure
             // Arrange
             var azureCloud = AzureCloud.Global;
             var expectedAuthorityHost = AzureAuthorityHosts.AzurePublicCloud;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act
-            var actualAuthorityHost = azureCloud.GetAzureAuthorityHost();
+            var actualAuthorityHost = azureCloud.GetAzureAuthorityHost(config);
 
             // Assert
             Assert.True(expectedAuthorityHost.Equals(actualAuthorityHost));
@@ -97,9 +140,10 @@ namespace Promitor.Tests.Unit.Azure
             // Arrange
             var azureCloud = AzureCloud.China;
             var expectedAuthorityHost = AzureAuthorityHosts.AzureChina;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act
-            var actualAuthorityHost = azureCloud.GetAzureAuthorityHost();
+            var actualAuthorityHost = azureCloud.GetAzureAuthorityHost(config);
 
             // Assert
             Assert.True(expectedAuthorityHost.Equals(actualAuthorityHost));
@@ -111,9 +155,10 @@ namespace Promitor.Tests.Unit.Azure
             // Arrange
             var azureCloud = AzureCloud.Germany;
             var expectedAuthorityHost = AzureAuthorityHosts.AzureGermany;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act
-            var actualAuthorityHost = azureCloud.GetAzureAuthorityHost();
+            var actualAuthorityHost = azureCloud.GetAzureAuthorityHost(config);
 
             // Assert
             Assert.True(expectedAuthorityHost.Equals(actualAuthorityHost));
@@ -125,9 +170,10 @@ namespace Promitor.Tests.Unit.Azure
             // Arrange
             var azureCloud = AzureCloud.UsGov;
             var expectedAuthorityHost = AzureAuthorityHosts.AzureGovernment;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act
-            var actualAuthorityHost = azureCloud.GetAzureAuthorityHost();
+            var actualAuthorityHost = azureCloud.GetAzureAuthorityHost(config);
 
             // Assert
             Assert.True(expectedAuthorityHost.Equals(actualAuthorityHost));
@@ -138,9 +184,17 @@ namespace Promitor.Tests.Unit.Azure
         {
             // Arrange
             var azureCloud = AzureCloud.Unspecified;
+            var config = CreateConfiguration(new Dictionary<string, string> { });
 
             // Act & Assert
-            Assert.Throws<ArgumentOutOfRangeException>(() => azureCloud.GetAzureAuthorityHost());
+            Assert.Throws<ArgumentOutOfRangeException>(() => azureCloud.GetAzureAuthorityHost(config));
+        }
+
+        private IConfigurationRoot CreateConfiguration(Dictionary<string, string> inMemoryConfiguration)
+        {
+            return new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemoryConfiguration)
+                .Build();
         }
     }
 }

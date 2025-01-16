@@ -1,5 +1,6 @@
 ﻿using Humanizer;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Extensions.Configuration;
 using System;
 
 namespace Promitor.Core.Extensions
@@ -16,15 +17,24 @@ namespace Promitor.Core.Extensions
             return azureCloud.Name.Replace("Azure", "").Replace("Cloud", "").Humanize(LetterCasing.Title);
         }
 
-        public static AzureEnvironment AzureCustomCloud = new AzureEnvironment()
-        {
-            Name = nameof(AzureCustomCloud),
-            AuthenticationEndpoint = Environment.GetEnvironmentVariable("PROMITOR_AUTH_ENDPOINT"),
-            ResourceManagerEndpoint = Environment.GetEnvironmentVariable("PROMITOR_RESOURCE_MANAGER_ENDPOINT"),
-            ManagementEndpoint = Environment.GetEnvironmentVariable("PROMITOR_MANAGEMENT_ENDPOINT"),
-            GraphEndpoint = Environment.GetEnvironmentVariable("PROMITOR_GRAPH_ENDPOINT"),
-            StorageEndpointSuffix = Environment.GetEnvironmentVariable("PROMITOR_STORAGE_ENDPOINT_SUFFIX"),
-            KeyVaultSuffix = Environment.GetEnvironmentVariable("PROMITOR_KEY_VAULT_SUFFIX")
-        };
+
+        public static AzureEnvironment GetAzureCustomCloud(IConfiguration configuration) {
+            AzureEnvironment azureCustomCloud = configuration.GetSection("azureCustomCloud").Get<AzureEnvironment>();
+            if (azureCustomCloud == null)
+            {
+                throw new InvalidOperationException("Custom Azure Cloud configuration is missing or invalid.");
+            }
+            if (string.IsNullOrWhiteSpace(azureCustomCloud.AuthenticationEndpoint) ||
+               string.IsNullOrWhiteSpace(azureCustomCloud.ResourceManagerEndpoint) ||
+               string.IsNullOrWhiteSpace(azureCustomCloud.ManagementEndpoint) ||
+               string.IsNullOrWhiteSpace(azureCustomCloud.GraphEndpoint) ||
+               string.IsNullOrWhiteSpace(azureCustomCloud.StorageEndpointSuffix) ||
+               string.IsNullOrWhiteSpace(azureCustomCloud.KeyVaultSuffix))
+            {
+                throw new InvalidOperationException("One or more required Azure custom cloud configuration values are missing.");
+            }
+            azureCustomCloud.Name = "AzureCustomCloud";
+            return azureCustomCloud;
+        }
     }
 }

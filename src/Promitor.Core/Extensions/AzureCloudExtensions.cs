@@ -2,6 +2,7 @@
 using Azure.Identity;
 using Azure.Monitor.Query;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Extensions.Configuration;
 using Promitor.Core.Serialization.Enum;
 
 namespace Promitor.Core.Extensions
@@ -13,7 +14,7 @@ namespace Promitor.Core.Extensions
         /// </summary>
         /// <param name="azureCloud">Microsoft Azure cloud</param>
         /// <returns>Azure environment information for specified cloud</returns>
-        public static AzureEnvironment GetAzureEnvironment(this AzureCloud azureCloud)
+        public static AzureEnvironment GetAzureEnvironment(this AzureCloud azureCloud, IConfiguration configuration)
         {
             switch (azureCloud)
             {
@@ -26,7 +27,7 @@ namespace Promitor.Core.Extensions
                 case AzureCloud.UsGov:
                     return AzureEnvironment.AzureUSGovernment;
                 case AzureCloud.Custom:
-                    return AzureEnvironmentExtensions.AzureCustomCloud;
+                    return AzureEnvironmentExtensions.GetAzureCustomCloud(configuration);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(azureCloud), "No Azure environment is known for in legacy SDK");
             }
@@ -71,7 +72,7 @@ namespace Promitor.Core.Extensions
         }
 
         
-        public static Uri GetAzureAuthorityHost(this AzureCloud azureCloud)
+        public static Uri GetAzureAuthorityHost(this AzureCloud azureCloud, IConfiguration configuration)
         {
             switch (azureCloud)
             {
@@ -84,7 +85,7 @@ namespace Promitor.Core.Extensions
                 case AzureCloud.UsGov:
                     return AzureAuthorityHosts.AzureGovernment;
                 case AzureCloud.Custom:
-                    return new Uri(Environment.GetEnvironmentVariable("PROMITOR_AZURE_AUTH_ENDPOINT"));
+                    return new Uri(AzureEnvironmentExtensions.GetAzureCustomCloud(configuration).AuthenticationEndpoint);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(azureCloud), "No Azure environment is known for");
             }

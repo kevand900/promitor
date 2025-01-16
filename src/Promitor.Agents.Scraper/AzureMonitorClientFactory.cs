@@ -43,7 +43,7 @@ namespace Promitor.Agents.Scraper
             if (useAzureMonitorSdk) {
                 azureMonitorClient = CreateNewAzureMonitorQueryClient(cloud, tenantId, subscriptionId, metricSinkWriter, azureScrapingSystemMetricsPublisher, resourceMetricDefinitionMemoryCache, configuration, azureMonitorIntegrationConfiguration, azureMonitorLoggingConfiguration, loggerFactory);
             } else {
-                azureMonitorClient = CreateNewLegacyAzureMonitorClient(cloud.GetAzureEnvironment(), tenantId, subscriptionId, metricSinkWriter, azureScrapingSystemMetricsPublisher, resourceMetricDefinitionMemoryCache, configuration, azureMonitorIntegrationConfiguration, azureMonitorLoggingConfiguration, loggerFactory);
+                azureMonitorClient = CreateNewLegacyAzureMonitorClient(cloud.GetAzureEnvironment(configuration), tenantId, subscriptionId, metricSinkWriter, azureScrapingSystemMetricsPublisher, resourceMetricDefinitionMemoryCache, configuration, azureMonitorIntegrationConfiguration, azureMonitorLoggingConfiguration, loggerFactory);
             }
             _azureMonitorClients.TryAdd(subscriptionId, azureMonitorClient);
 
@@ -60,7 +60,7 @@ namespace Promitor.Agents.Scraper
         private static AzureMonitorQueryClient CreateNewAzureMonitorQueryClient(AzureCloud cloud, string tenantId, string subscriptionId, MetricSinkWriter metricSinkWriter, IAzureScrapingSystemMetricsPublisher azureScrapingSystemMetricsPublisher, IMemoryCache resourceMetricDefinitionMemoryCache, IConfiguration configuration, IOptions<AzureMonitorIntegrationConfiguration> azureMonitorIntegrationConfiguration, IOptions<AzureMonitorLoggingConfiguration> azureMonitorLoggingConfiguration, ILoggerFactory loggerFactory)
         {
             var azureCredentials = AzureAuthenticationFactory.GetConfiguredAzureAuthentication(configuration);
-            var azureMonitorQueryClient = new AzureMonitorQueryClient(cloud, tenantId, subscriptionId, azureCredentials, metricSinkWriter, azureScrapingSystemMetricsPublisher, resourceMetricDefinitionMemoryCache, loggerFactory, azureMonitorIntegrationConfiguration, azureMonitorLoggingConfiguration);
+            var azureMonitorQueryClient = new AzureMonitorQueryClient(cloud, tenantId, subscriptionId, azureCredentials, metricSinkWriter, azureScrapingSystemMetricsPublisher, resourceMetricDefinitionMemoryCache, loggerFactory, azureMonitorIntegrationConfiguration, azureMonitorLoggingConfiguration, configuration);
             return azureMonitorQueryClient;
         }
     }

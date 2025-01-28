@@ -26,15 +26,11 @@ namespace Promitor.Core.Scraping.Configuration.Serialization.v1.Core
         {
             if (Enum.TryParse<AzureCloud>(rawAzureCloud, out var azureCloud))
             {
-                try
+                if (azureCloud == AzureCloud.Global || azureCloud == AzureCloud.UsGov || azureCloud == AzureCloud.China)
                 {
-                    azureCloud.DetermineMetricsClientAudience();
                     return azureCloud;
                 }
-                catch (ArgumentOutOfRangeException)
-                {
-                    errorReporter.ReportError(nodePair.Value, $"'{rawAzureCloud}' is not a supported value for 'cloud'.");
-                }
+                errorReporter.ReportError(nodePair.Value, $"'{rawAzureCloud}' is not a supported value for 'cloud'.");
             }
             else
             {

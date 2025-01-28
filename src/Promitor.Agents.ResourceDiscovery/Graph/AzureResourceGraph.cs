@@ -29,7 +29,6 @@ namespace Promitor.Agents.ResourceDiscovery.Graph
         private readonly IOptionsMonitor<ResourceDeclaration> _resourceDeclarationMonitor;
         private readonly ISystemMetricsPublisher _systemMetricsPublisher;
         private readonly ILogger<AzureResourceGraph> _logger;
-        private readonly IConfiguration _configuration;
 
         private ResourceGraphClient _graphClient;
 
@@ -55,7 +54,6 @@ namespace Promitor.Agents.ResourceDiscovery.Graph
             _logger = logger;
             _resourceDeclarationMonitor = resourceDeclarationMonitor;
             _systemMetricsPublisher = systemMetricsPublisher;
-            _configuration = configuration;
             _azureAuthenticationInfo = AzureAuthenticationFactory.GetConfiguredAzureAuthentication(configuration);
         }
 
@@ -269,8 +267,8 @@ namespace Promitor.Agents.ResourceDiscovery.Graph
 
         private async Task<ResourceGraphClient> CreateClientAsync()
         {
-            var azureEnvironment = _resourceDeclarationMonitor.CurrentValue.AzureLandscape.Cloud.GetAzureEnvironment(_configuration);
-            var azureAuthorityHost = _resourceDeclarationMonitor.CurrentValue.AzureLandscape.Cloud.GetAzureAuthorityHost(_configuration);
+            var azureEnvironment = _resourceDeclarationMonitor.CurrentValue.AzureLandscape.AzureEnvironment;
+            var azureAuthorityHost = azureEnvironment.GetAzureAuthorityHost();
 
             var credentials = await AzureAuthenticationFactory.GetTokenCredentialsAsync(azureEnvironment.ManagementEndpoint, TenantId, _azureAuthenticationInfo, azureAuthorityHost);
             var resourceManagerBaseUri = new Uri(azureEnvironment.ResourceManagerEndpoint);

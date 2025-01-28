@@ -4,12 +4,15 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using Promitor.Agents.Core.Validation.Interfaces;
 using Promitor.Agents.Core.Validation.Steps;
+using Promitor.Core.Extensions;
 using Promitor.Core.Scraping.Configuration.Model;
 using Promitor.Core.Scraping.Configuration.Model.Metrics;
 using Promitor.Core.Scraping.Configuration.Providers.Interfaces;
 using Promitor.Core.Scraping.Configuration.Serialization;
 using Promitor.Agents.Scraper.Validation.MetricDefinitions;
 using ValidationResult = Promitor.Agents.Core.Validation.ValidationResult;
+using Promitor.Core.Serialization.Enum;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
 
 namespace Promitor.Agents.Scraper.Validation.Steps
 {
@@ -122,6 +125,52 @@ namespace Promitor.Agents.Scraper.Validation.Steps
             if (string.IsNullOrWhiteSpace(azureMetadata.ResourceGroupName))
             {
                 errorMessages.Add("No resource group name is not configured");
+            }
+
+            if (azureMetadata.Cloud == AzureCloud.Unspecified)
+            {
+                errorMessages.Add("No Azure cloud is configured");
+            }
+
+            if (azureMetadata.Cloud == AzureCloud.Global)
+            {
+                azureMetadata.AzureEnvironment = AzureEnvironment.AzureGlobalCloud;
+            }
+            else if (azureMetadata.Cloud == AzureCloud.China)
+            {
+                azureMetadata.AzureEnvironment = AzureEnvironment.AzureChinaCloud;
+            }
+            else if (azureMetadata.Cloud == AzureCloud.Germany)
+            {
+                azureMetadata.AzureEnvironment = AzureEnvironment.AzureGermanCloud;
+            }
+            else if (azureMetadata.Cloud == AzureCloud.UsGov)
+            {
+                azureMetadata.AzureEnvironment = AzureEnvironment.AzureUSGovernment;
+            }
+            else if (azureMetadata.Cloud == AzureCloud.Custom)
+            {
+                if (azureMetadata.AzureEnvironment == null)
+                {
+                    errorMessages.Add("AzureEnvironment configuration is missing for custom cloud.");
+                }
+                if (string.IsNullOrWhiteSpace(azureMetadata.AzureEnvironment.AuthenticationEndpoint) ||
+                string.IsNullOrWhiteSpace(azureMetadata.AzureEnvironment.ResourceManagerEndpoint) ||
+                string.IsNullOrWhiteSpace(azureMetadata.AzureEnvironment.ManagementEndpoint) ||
+                string.IsNullOrWhiteSpace(azureMetadata.AzureEnvironment.GraphEndpoint) ||
+                string.IsNullOrWhiteSpace(azureMetadata.AzureEnvironment.StorageEndpointSuffix) ||
+                string.IsNullOrWhiteSpace(azureMetadata.AzureEnvironment.KeyVaultSuffix))
+                {
+                    errorMessages.Add("All custom cloud endpoints were not configured to query");
+                }
+                else
+                {
+                    azureMetadata.AzureEnvironment.Name = azureMetadata.Cloud.GetEnvironmentName();
+                }
+            }
+            else
+            {
+                errorMessages.Add($"{nameof(azureMetadata.Cloud)} No Azure environment is known for in legacy SDK");
             }
 
             return errorMessages;

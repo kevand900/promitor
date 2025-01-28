@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Bogus;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Promitor.Agents.ResourceDiscovery.Configuration;
@@ -63,6 +64,38 @@ namespace Promitor.Tests.Unit.Validation.ResourceDiscovery
         }
 
         [Fact]
+        public void Validate_AzureCustomCloudWithMissingEndpoints_Fails()
+        {
+            // Arrange
+            var azureLandscapeConfiguration = CreateLandscapeConfiguration();
+            azureLandscapeConfiguration.Value.Cloud = AzureCloud.Custom;
+
+            // Act
+            var azureLandscapeValidationStep = new AzureLandscapeValidationStep(azureLandscapeConfiguration, NullLogger<AzureLandscapeValidationStep>.Instance);
+            var validationResult = azureLandscapeValidationStep.Run();
+
+            // Assert
+            PromitorAssert.ValidationFailed(validationResult);
+        }
+
+        [Fact]
+        public void Validate_AzureGlobalCloud_ProvidesCorrectEnvironmentInfo()
+
+        {
+            // Arrange
+            var azureLandscapeConfiguration = CreateLandscapeConfiguration();
+            azureLandscapeConfiguration.Value.Cloud = AzureCloud.Global;
+            var expectedEnvironment = AzureEnvironment.AzureGlobalCloud;
+
+            // Act
+            var azureLandscapeValidationStep = new AzureLandscapeValidationStep(azureLandscapeConfiguration, NullLogger<AzureLandscapeValidationStep>.Instance);
+            var validationResult = azureLandscapeValidationStep.Run();
+
+            // Assert
+            PromitorAssert.ContainsSameAzureEnvironmentInfo(expectedEnvironment, azureLandscapeConfiguration.Value.AzureEnvironment);
+        }
+
+        [Fact]
         public void Validate_NoSubscriptionIsConfigured_Fails()
         {
             // Arrange
@@ -111,13 +144,14 @@ namespace Promitor.Tests.Unit.Validation.ResourceDiscovery
         private IOptions<AzureLandscape> CreateLandscapeConfiguration()
         {
             var allAzureCloudValues = Enum.GetValues(typeof(AzureCloud));
-            var allowedAzureClouds = allAzureCloudValues.OfType<AzureCloud>().Where(entry => entry != AzureCloud.Unspecified).ToList();
+            var allowedAzureClouds = allAzureCloudValues.OfType<AzureCloud>().Where(entry => (entry != AzureCloud.Unspecified || entry != AzureCloud.Custom)).ToList();
 
             var azureLandscape = new Faker<AzureLandscape>()
                 .StrictMode(true)
                 .RuleFor(landscape => landscape.Subscriptions, faker => new List<string> { faker.Name.FirstName(), faker.Name.FirstName() })
                 .RuleFor(landscape => landscape.TenantId, faker => faker.Name.FirstName())
                 .RuleFor(landscape => landscape.Cloud, faker => faker.PickRandom(allowedAzureClouds))
+                .RuleFor(landscape => landscape.AzureEnvironment, faker => null)
                 .Generate();
 
             return Options.Create(azureLandscape);

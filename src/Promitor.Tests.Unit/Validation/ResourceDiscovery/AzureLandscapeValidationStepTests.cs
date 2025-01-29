@@ -80,7 +80,6 @@ namespace Promitor.Tests.Unit.Validation.ResourceDiscovery
 
         [Fact]
         public void Validate_AzureGlobalCloud_ProvidesCorrectEnvironmentInfo()
-
         {
             // Arrange
             var azureLandscapeConfiguration = CreateLandscapeConfiguration();

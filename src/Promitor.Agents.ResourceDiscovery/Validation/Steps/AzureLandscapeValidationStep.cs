@@ -39,6 +39,31 @@ namespace Promitor.Agents.ResourceDiscovery.Validation.Steps
                 errorMessages.Add("No Azure cloud was configured");
             }
 
+            errorMessages.AddRange(ValidateAzureCloudEnvironment());
+            
+            if (_azureLandscape.Subscriptions == null || _azureLandscape.Subscriptions.Count == 0)
+            {
+                errorMessages.Add("No subscription id(s) were configured to query");
+            }
+            else
+            {
+                if (_azureLandscape.Subscriptions.Distinct().Count() != _azureLandscape.Subscriptions.Count)
+                {
+                    errorMessages.Add("Duplicate subscription ids were configured to query");
+                }
+
+                if (_azureLandscape.Subscriptions.Any(string.IsNullOrWhiteSpace))
+                {
+                    errorMessages.Add("Empty subscription is configured to query");
+                }
+            }
+
+            return errorMessages.Any() ? ValidationResult.Failure(ComponentName, errorMessages) : ValidationResult.Successful(ComponentName);
+        }
+
+        private IEnumerable<string> ValidateAzureCloudEnvironment()
+        {
+            var errorMessages = new List<string>();
             if (_azureLandscape.Cloud == AzureCloud.Global)
             {
                 _azureLandscape.AzureEnvironment = AzureEnvironment.AzureGlobalCloud;
@@ -75,29 +100,11 @@ namespace Promitor.Agents.ResourceDiscovery.Validation.Steps
                     _azureLandscape.AzureEnvironment.Name = _azureLandscape.Cloud.GetEnvironmentName();
                 }
             }
-            else 
+            else
             {
                 errorMessages.Add($"{nameof(_azureLandscape.Cloud)} No Azure environment is known for in legacy SDK");
             }
-
-            if (_azureLandscape.Subscriptions == null || _azureLandscape.Subscriptions.Any() == false)
-            {
-                errorMessages.Add("No subscription id(s) were configured to query");
-            }
-            else
-            {
-                if (_azureLandscape.Subscriptions.Distinct().Count() != _azureLandscape.Subscriptions.Count)
-                {
-                    errorMessages.Add("Duplicate subscription ids were configured to query");
-                }
-
-                if (_azureLandscape.Subscriptions.Any(string.IsNullOrWhiteSpace))
-                {
-                    errorMessages.Add("Empty subscription is configured to query");
-                }
-            }
-
-            return errorMessages.Any() ? ValidationResult.Failure(ComponentName, errorMessages) : ValidationResult.Successful(ComponentName);
+            return errorMessages;
         }
     }
 }

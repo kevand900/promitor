@@ -13,6 +13,7 @@ using Promitor.Agents.Scraper.Validation.MetricDefinitions;
 using ValidationResult = Promitor.Agents.Core.Validation.ValidationResult;
 using Promitor.Core.Serialization.Enum;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Promitor.Core.Scraping.Configuration.Serialization.v1.Model;
 
 namespace Promitor.Agents.Scraper.Validation.Steps
 {
@@ -132,6 +133,15 @@ namespace Promitor.Agents.Scraper.Validation.Steps
                 errorMessages.Add("No Azure cloud is configured");
             }
 
+            errorMessages.AddRange(ValidateAzureCloudEnvironment(azureMetadata));
+
+            return errorMessages;
+        }
+
+        private static IEnumerable<string> ValidateAzureCloudEnvironment(AzureMetadata azureMetadata)
+        {
+            var errorMessages = new List<string>();
+
             if (azureMetadata.Cloud == AzureCloud.Global)
             {
                 azureMetadata.AzureEnvironment = AzureEnvironment.AzureGlobalCloud;
@@ -172,7 +182,6 @@ namespace Promitor.Agents.Scraper.Validation.Steps
             {
                 errorMessages.Add($"{nameof(azureMetadata.Cloud)} No Azure environment is known for in legacy SDK");
             }
-
             return errorMessages;
         }
 
